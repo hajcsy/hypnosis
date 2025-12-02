@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap" rel="stylesheet">
+
+
+    <title>Subconscious Interface</title>
+    <style>
+        /* --- RESET & BASE STYLES --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000; /* Pure black background */
+            color: #000;
+            font-family: 'Doto', Courier, monospace; /* Monospace for that "system" feel */
+            overflow: hidden; /* No scrolling */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- CONTAINER --- */
+        #interface-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- WEBCAM FEED (The Mirror) --- */
+        #webcam-feed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror the image so it feels like a reflection */
+            
+            /* THE LIMINAL FILTER */
+            /* Adjust these values to change the mood */
+            filter: grayscale(100%) contrast(130%) brightness(80%) blur(0.5px);
+            
+            opacity: 0; /* Hidden initially */
+            transition: opacity 2s ease-in-out;
+            z-index: 1;
+        }
+
+        /* --- PNG OVERLAY (The "Brain AI" Visual) --- */
+        #overlay-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Covers screen or use 'contain' to keep aspect ratio */
+            z-index: 2;
+            opacity: 0; /* Hidden initially */
+            pointer-events: none; /* Let clicks pass through */
+            transition: opacity 3s ease-in-out;
+            
+            /* BLEND MODE */
+            /* 'screen' or 'overlay' makes black parts of your PNG transparent */
+            /* and light parts glow. Great for sci-fi/holograms. */
+            mix-blend-mode: screen; 
+        }
+
+        /* --- TEXT MESSAGE (The Barnum Effect) --- */
+        #message-container {
+            position: absolute;
+            z-index: 3;
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+            /* Centered on screen */
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        #typing-text {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #000;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            font-weight: normal;
+            letter-spacing: 2px;
+        }
+
+        /* Blinking cursor effect */
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.5rem;
+            background-color: white;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* --- START BUTTON --- */
+        #start-btn {
+            z-index: 10;
+            padding: 15px 30px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            background: transparent;
+            color: white;
+            border: 1px solid white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        #start-btn:hover {
+            background: white;
+            color: black;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="interface-container">
+        
+        <!-- 1. The Camera Video -->
+        <video id="webcam-feed" autoplay playsinline muted></video>
+
+        <!-- 2. The PNG Overlay -->
+        <!-- Replace the src below with your own PNG file path -->
+        <!-- Using a placeholder abstract grid for now -->
+        <img id="overlay-image" src="hypnosis.gif" alt="Brain Interface Overlay">
+
+        <!-- 3. The Text Output -->
+        <div id="message-container">
+            <span id="typing-text"></span><span class="cursor"></span>
+        </div>
+
+        <!-- 4. The Trigger -->
+        <button id="start-btn" onclick="startExperience()">Connect to Subconscious</button>
+
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        
+        // This is the bank of Barnum statements.
+        // You can add or edit these strings.
+        const subconsciousMessages = [
+            "You present a capable exterior to the world, but you know this is a wall you've built to protect a deeper, more sensitive self.",
+            "You are at a crossroads. Part of you craves significant change, while another part clings to the safety of the familiar.",
+            "The obstacle you perceive is not a wall, but a mirror. The resistance you feel is your own potential waiting to be claimed.",
+            "You have a great deal of unused creative energy that you have been afraid to turn to your advantage.",
+            "You often doubt your decisions, even when you know deep down what is right. The key has been in your hand all along."
+        ];
+
+        // --- ELEMENTS ---
+        const videoElement = document.getElementById('webcam-feed');
+        const overlayElement = document.getElementById('overlay-image');
+        const textElement = document.getElementById('typing-text');
+        const startBtn = document.getElementById('start-btn');
+        const cursor = document.querySelector('.cursor');
+
+        // --- MAIN FUNCTION ---
+        async function startExperience() {
+            // 1. Hide the button
+            startBtn.classList.add('hidden');
+
+            try {
+                // 2. Get Camera Access
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+
+                // 3. Fade in the camera (The "Mirror" activates)
+                // Small delay to let camera initialize
+                setTimeout(() => {
+                    videoElement.style.opacity = "1";
+                }, 500);
+
+                // 4. Wait 4 seconds (The "Liminal" State - just staring at self)
+                setTimeout(() => {
+                    revealOverlayAndMessage();
+                }, 4000);
+
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                alert("Please allow camera access to communicate with your subconscious.");
+                startBtn.classList.remove('hidden');
+            }
+        }
+
+        function revealOverlayAndMessage() {
+            // 1. Fade in the PNG overlay
+            overlayElement.style.opacity = "0.6"; // Adjust opacity as needed (0 to 1)
+
+            // 2. Select a random message
+            const randomMessage = subconsciousMessages[Math.floor(Math.random() * subconsciousMessages.length)];
+
+            // 3. Start typing the message after a slight delay
+            setTimeout(() => {
+                typeWriter(randomMessage, 0);
+            }, 1000);
+        }
+
+        // --- TYPEWRITER EFFECT ---
+        function typeWriter(text, i) {
+            if (i < text.length) {
+                textElement.innerHTML += text.charAt(i);
+                
+                // Random typing speed to make it feel more "organic" or "thinking"
+                let speed = Math.floor(Math.random() * 100) + 50; 
+                
+                // Add extra pause for punctuation
+                if (text.charAt(i) === '.' || text.charAt(i) === ',') {
+                    speed += 400;
+                }
+
+                setTimeout(() => {
+                    typeWriter(text, i + 1);
+                }, speed);
+            } else {
+                // When done, maybe fade out the cursor?
+                // cursor.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>

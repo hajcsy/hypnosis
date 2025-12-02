@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap" rel="stylesheet">
+
+
+    <title>Brain AI - Initialization</title>
+    <style>
+        /* --- RESET & BASE --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #252BCC;
+            font-family: 'Helvetica', Courier, monospace;
+            overflow: hidden; /* Prevent scrolling during the intro */
+        }
+
+        /* --- BACKGROUND VIDEO --- */
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+            opacity: 100; /* Slightly dimmed so text pops */
+             /* Optional: Makes any video look "noir": filter: grayscale(100%) contrast(1.2); */
+        }
+
+        /* --- CONTENT WRAPPER --- */
+        .content-container {
+            position: relative;
+            z-index: 1; /* Above video */
+            height: 100%;
+            width: 90%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            
+            /* ANIMATION: Hidden initially */
+            opacity: 0;
+            animation: fadeContentIn 2s ease-out forwards;
+            /* DELAY: Wait 3 seconds for the "hypnotic video" part before showing text */
+            animation-delay: 0s; 
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-bottom: 2rem;
+            font-weight: normal;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .instruction-text {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+
+        /* --- THE BIG WHITE BUTTON --- */
+        .start-btn {
+            margin-top: 2rem;
+            padding: 20px 50px;
+            background-color: white;
+            color: black;
+            text-decoration: none; /* Removes underline from link */
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px; /* Makes it perfectly rounded */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        /* Button Hover Effect */
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+        }
+
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeContentIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; margin-bottom: 1.5rem; }
+            p { font-size: 1rem; }
+            .start-btn { padding: 18px 40px; font-size: 1.2rem; width: 60%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HYPNOTIC VIDEO BACKGROUND -->
+    <!-- Replace 'src' with your local video file -->
+    <video id="bg-video" autoplay muted loop playsinline>
+        <source src="hypnosis.gif">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="content-container">
+        <h1>Welcome</h1>
+        
+        <p>To sync with your subconscious, we must first attune to its language.</p>
+        
+        <p>Your subconscious does not speak in words, but in symbols, feelings, and echoes.</p>
+        
+        <p>Answer the following prompts. There are no right or wrong answers. Only your answers.</p>
+
+        <p class="instruction-text">Press Start to begin calibration.</p>
+
+        <!-- THE BUTTON -->
+        <a href="questions.html" class="start-btn">Start</a>
+    </div>
+
+</body>
+</html>

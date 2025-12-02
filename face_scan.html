@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Card Checking - Identification</title>
+
+<!-- P5.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+<!-- ml5.js -->
+<script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: black;
+        font-family: Helvetica, Arial, sans-serif;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        gap: 15px;
+    }
+
+    /* Counter at top */
+    #progress-meter {
+        width: 120px;
+        height: 120px;
+        position: relative;
+        margin-top: 20px;
+    }
+
+    #progress-svg {
+        transform: rotate(-90deg);
+    }
+
+    .circle-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.3);
+        stroke-width: 5;
+    }
+
+    #progress-circle {
+        fill: none;
+        stroke: white;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.1s linear;
+    }
+
+    #progress-value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    /* Top text above frame */
+    #top-banner {
+        font-size: 1.3rem;
+        text-align: center;
+    }
+
+    #main-status {
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    /* Frame container */
+    #canvas-container {
+        width: 90%;
+        max-width: 800px;
+        height: 550px; /* taller frame */
+        border: 4px solid white;
+        position: relative;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+        transform: scaleX(-1);
+    }
+
+    /* FACE CARD ACCEPTED text */
+    #accepted-text {
+        margin-top: 10px;
+        font-size: 1rem;
+        color: rgba(255,255,255,0.7);
+        text-align: center;
+        display: none;
+    }
+
+    /* Continue button */
+    #next-btn {
+        margin-top: 5px;
+        padding: 12px 40px;
+        background: white;
+        color: black;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        display: none;
+        text-transform: uppercase;
+    }
+
+    @media (max-width: 600px) {
+        #progress-meter { width: 100px; height: 100px; }
+        #progress-value { font-size: 1.2rem; }
+        #canvas-container { height: 400px; }
+        #top-banner { font-size: 1.1rem; }
+        #main-status { font-size: 0.9rem; }
+    }
+</style>
+</head>
+<body>
+
+<div id="top-banner">FACE CARD CHECKING</div>
+<div id="main-status">SYSTEM READY</div>
+
+<!-- Counter at top -->
+<div id="progress-meter">
+    <svg id="progress-svg" width="100%" height="100%" viewBox="0 0 150 150">
+        <circle class="circle-bg" cx="75" cy="75" r="70"/>
+        <circle id="progress-circle" cx="75" cy="75" r="70"/>
+    </svg>
+    <div id="progress-value">0%</div>
+</div>
+
+<!-- CAMERA FRAME -->
+<div id="canvas-container"></div>
+
+<!-- Face card accepted text + button -->
+<div id="accepted-text">FACE CARD ACCEPTED</div>
+<a href="eye_scanning.html" id="next-btn">Continue</a>
+
+<script>
+    let faceMesh;
+    let video;
+    let faces = [];
+    const options = { maxFaces: 1 };
+
+    const totalKeypoints = 468;
+    let revealedKeypoints = new Array(totalKeypoints).fill(false);
+    let revealedCount = 0;
+    let isScanning = false;
+
+    const mainStatusEl = document.getElementById('main-status');
+    const progressValueEl = document.getElementById('progress-value');
+    const progressCircleEl = document.getElementById('progress-circle');
+    const nextBtnEl = document.getElementById('next-btn');
+    const acceptedTextEl = document.getElementById('accepted-text');
+
+    const circumference = 2 * Math.PI * 70;
+    progressCircleEl.style.strokeDasharray = `${circumference}`;
+    progressCircleEl.style.strokeDashoffset = circumference;
+
+    function preload() {
+        faceMesh = ml5.faceMesh(options, () => {
+            mainStatusEl.innerHTML = "SYSTEM READY";
+        });
+    }
+
+    function setup() {
+        const canvas = createCanvas(700, 550);
+        canvas.parent('canvas-container');
+
+        video = createCapture(VIDEO);
+        video.size(700, 550);
+        video.hide();
+
+        faceMesh.detectStart(video, results => faces = results);
+    }
+
+    function draw() {
+        image(video, 0, 0, width, height);
+
+        if (faces.length > 0) {
+            if (!isScanning) startScanning();
+
+            let face = faces[0];
+            for (let j = 0; j < face.keypoints.length; j++) {
+                if (revealedKeypoints[j]) {
+                    let k = face.keypoints[j];
+                    fill(37, 43, 204);
+                    noStroke();
+                    circle(k.x, k.y, 5);
+                }
+            }
+        }
+    }
+
+    function startScanning() {
+        isScanning = true;
+        mainStatusEl.innerHTML = "AUTHENTICATING...";
+
+        let interval = setInterval(() => {
+            let index = revealedKeypoints.indexOf(false);
+
+            if (index === -1) {
+                clearInterval(interval);
+                finishScanning();
+                return;
+            }
+
+            revealedKeypoints[index] = true;
+            revealedCount++;
+
+            updateProgress();
+
+        }, 10);
+    }
+
+    function updateProgress() {
+        let p = Math.floor((revealedCount / totalKeypoints) * 100);
+        progressValueEl.innerHTML = p + "%";
+
+        const offset = circumference - (p / 100) * circumference;
+        progressCircleEl.style.strokeDashoffset = offset;
+    }
+
+    function finishScanning() {
+        acceptedTextEl.style.display = "block";
+        mainStatusEl.innerHTML = "";
+        progressValueEl.innerHTML = "100%";
+        progressCircleEl.style.strokeDashoffset = 0;
+        nextBtnEl.style.display = "inline-block";
+    }
+</script>
+
+</body>
+</html>

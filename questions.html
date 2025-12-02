@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inner Weather</title>
+    <style>
+        /* --- RESET & BASE --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Helvetica', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 20px;
+            animation: fadeContentIn 1.5s ease-out forwards;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        .small-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #888; /* Slightly dim */
+            margin-bottom: 2rem;
+            display: block;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            line-height: 1.5;
+            margin-bottom: 3rem;
+            font-weight: normal;
+        }
+
+        /* --- OPTIONS (INTERACTIVE) --- */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 3rem;
+        }
+
+        .option-btn {
+            background: transparent;
+            border: 1px solid #333;
+            color: #ccc;
+            padding: 20px;
+            font-family: inherit; /* Keep Courier */
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            outline: none;
+        }
+
+        .option-btn:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        /* The Selected State */
+        .option-btn.selected {
+            background-color: white;
+            color: black;
+            border-color: white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        /* --- NEXT BUTTON --- */
+        .next-link {
+            display: inline-block;
+            padding: 15px 40px;
+            background-color: transparent;
+            color: white;
+            text-decoration: none;
+            border: 1px solid white;
+            border-radius: 30px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            
+            /* Hidden initially until choice is made */
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+        }
+
+        .next-link.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .next-link:hover {
+            background-color: white;
+            color: black;
+        }
+
+        /* --- ANIMATION --- */
+        @keyframes fadeContentIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- MOBILE TWEAKS --- */
+        @media (max-width: 600px) {
+            .question-text { font-size: 1.2rem; }
+            .option-btn { padding: 15px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <span class="small-title">✵ The Inner Weather ✵</span>
+        
+        <p class="question-text">Think of your current state of mind. Which landscape does it most resemble?</p>
+
+        <div class="options-list">
+            <button class="option-btn" onclick="selectOption(this)">A busy city street in the rain.</button>
+            <button class="option-btn" onclick="selectOption(this)">A dense, ancient forest, quiet and overgrown.</button>
+            <button class="option-btn" onclick="selectOption(this)">An empty desert under a vast, bright sky.</button>
+        </div>
+
+        <!-- This links to the camera/mirror page you created earlier -->
+        <a href="face_scan.html" id="nextBtn" class="next-link">Next</a>
+    </div>
+
+    <script>
+        function selectOption(clickedBtn) {
+            // 1. Remove 'selected' class from all buttons
+            const allButtons = document.querySelectorAll('.option-btn');
+            allButtons.forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            // 2. Add 'selected' class to the clicked button
+            clickedBtn.classList.add('selected');
+
+            // 3. Reveal the Next button
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.classList.add('active');
+        }
+    </script>
+
+</body>
+</html>

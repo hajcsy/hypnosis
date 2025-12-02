@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subconscious Synchronization</title>
+    <style>
+        /* --- CORE STYLES --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #00FF00; /* Neon Green for system text */
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- CONTAINER --- */
+        #scan-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- WEBCAM FEED (The Background) --- */
+        #webcam-feed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror the image */
+            filter: grayscale(100%) brightness(0.9) contrast(150%); 
+            z-index: 1;
+        }
+
+        /* --- EYE PNG OVERLAY (The Target - NOW A SQUARE) --- */
+        #eye-overlay-wrapper {
+            position: absolute;
+            z-index: 3;
+            width: 60vw;
+            max-width: 450px;
+            height: 60vw;
+            max-height: 450px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0; /* Hidden initially */
+            transition: opacity 1s ease-in;
+            overflow: hidden; 
+            border-radius: 5px; /* Slight rounding for square */
+            /* Stronger glow for visibility */
+            box-shadow: 0 0 70px 10px rgba(0, 255, 0, 0.7);
+            border: 2px solid #00FF00; /* Green outline for the square */
+        }
+        
+        /* This is the container for your 'iris.png' file */
+        #eye-overlay {
+            width: 100%;
+            height: 100%;
+            display: block;
+            opacity: 0.8;
+            mix-blend-mode: screen; 
+            /* Placeholder for iris.png. REPLACE this URL/content with your actual iris.png */
+            content: url(iris.png); 
+        }
+
+        /* --- SCANNING LINE EFFECT --- */
+        #scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px; 
+            background: #00FFFF; /* Bright Cyan/Blue */
+            box-shadow: 0 0 20px 8px rgba(0, 255, 255, 0.7); 
+            opacity: 0; /* Hidden initially */
+            transform: translateY(0); /* Start at the top */
+        }
+        
+        .is-scanning #scan-line {
+            opacity: 1;
+            /* Animation now runs infinitely and cycles up and down */
+            animation: scanMove 2.5s ease-in-out infinite; 
+        }
+
+        @keyframes scanMove {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(calc(100% - 5px)); } 
+            100% { transform: translateY(0); } 
+        }
+
+        /* --- STATUS TEXT --- */
+        #status-text {
+            position: absolute;
+            top: 10vh;
+            z-index: 4;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.8);
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        
+        #line-one {
+            display: block;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transition: opacity 1s ease-in;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2rem;
+            background-color: #00FF00;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* --- NEXT BUTTON --- */
+        #next-btn {
+            position: absolute;
+            bottom: 10vh;
+            z-index: 5;
+            padding: 20px 50px;
+            background-color: white;
+            color: black;
+            text-decoration: none; 
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            transition: opacity 0.5s ease-in, transform 0.2s ease;
+            cursor: pointer;
+            
+            /* Hidden initially */
+            opacity: 0; 
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+
+        #next-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        #next-btn:hover {
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+        }
+
+        /* --- MOBILE TWEAKS --- */
+        @media (max-width: 600px) {
+            #eye-overlay-wrapper {
+                width: 80vw;
+                height: 80vw;
+                max-width: 300px;
+                max-height: 300px;
+            }
+            #status-text {
+                font-size: 1.1rem;
+            }
+            #next-btn {
+                padding: 15px 40px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="scan-container">
+        <!-- The user's live video feed -->
+        <video id="webcam-feed" autoplay playsinline muted></video>
+
+        <!-- Status and Guidance Text -->
+        <div id="status-text">
+            <span id="line-one"></span>
+            <span id="typing-status"></span>
+            <span class="cursor"></span>
+        </div>
+        
+        <!-- The Eye Target & Scanner -->
+        <div id="eye-overlay-wrapper">
+            <div id="scan-line"></div>
+            <div id="eye-overlay"></div>
+        </div>
+        
+        <!-- Next Button -->
+        <a href="subconciuos.html" id="next-btn">Continue</a>
+
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        // FIX: The time the user must wait for the scan to "finish" is now 7 seconds.
+        const WAIT_FOR_SCAN_MS = 7000; 
+        
+        // --- TEXT ---
+        const LINE_ONE = "now we're going to go deeper into your subconscious";
+        const LINE_TWO_TYPING = "the eye is the mirror of the soul please scan your iris";
+        // New instruction line
+        const INSTRUCTION_TEXT = "place your left eye to the square";
+
+        // --- ELEMENTS ---
+        const videoElement = document.getElementById('webcam-feed');
+        const eyeOverlayWrapper = document.getElementById('eye-overlay-wrapper');
+        const lineOneSpan = document.getElementById('line-one');
+        const statusTextSpan = document.getElementById('typing-status');
+        const cursor = document.querySelector('.cursor');
+        const nextBtn = document.getElementById('next-btn');
+        
+        // --- UTILITY: SLEEP FUNCTION ---
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        // --- MAIN INITIALIZATION ---
+        async function initScan() {
+            try {
+                // 1. Get Camera Access
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+                
+                await new Promise(resolve => videoElement.onloadedmetadata = resolve);
+
+                // 2. Start the dramatic text sequence
+                await revealIntroText();
+                
+                // 3. Start the visual scan effect
+                await startScanEffect();
+
+                // 4. Finish and show the button
+                finishScan();
+
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                lineOneSpan.innerHTML = "SYSTEM ERROR: Camera access required.";
+                lineOneSpan.style.opacity = '1';
+                statusTextSpan.innerHTML = "Please ensure permissions are granted and refresh the page.";
+                cursor.style.display = 'none';
+            }
+        }
+
+        // --- TEXT REVEAL LOGIC ---
+        async function revealIntroText() {
+            // 1. Reveal LINE ONE
+            lineOneSpan.innerHTML = LINE_ONE;
+            await sleep(100);
+            lineOneSpan.style.opacity = '1';
+
+            // 2. Start LINE TWO (Typing effect)
+            await sleep(2000); 
+            await typeWriter(LINE_TWO_TYPING);
+            await sleep(500); 
+            
+            // 3. Append and reveal the instruction line
+            statusTextSpan.innerHTML += `<br><span style="font-size: 1rem; color: yellow;">[${INSTRUCTION_TEXT}]</span>`;
+            await sleep(1000);
+        }
+
+        // --- SCANNING EFFECT ---
+        async function startScanEffect() {
+            // 1. Hide first text line and show the eye target
+            lineOneSpan.style.opacity = '0';
+            eyeOverlayWrapper.style.opacity = '1';
+            
+            // 2. Start the visual scan and set status text
+            eyeOverlayWrapper.classList.add('is-scanning');
+            statusTextSpan.innerHTML = "AUTHENTICATING...";
+            cursor.style.display = 'none';
+            
+            // 3. Wait for the required scan duration (7 seconds)
+            await sleep(WAIT_FOR_SCAN_MS);
+        }
+        
+        // --- FINAL STEP: Reveal Button ---
+        function finishScan() {
+            // Stop the scanning animation visuals
+            eyeOverlayWrapper.classList.remove('is-scanning');
+            eyeOverlayWrapper.style.opacity = '0.5'; 
+            
+            // FIX: Update final status text to the completed state
+            statusTextSpan.innerHTML = "IRIS SCANNED";
+            
+            // Show the next button
+            nextBtn.classList.add('active');
+        }
+        
+        // --- TYPEWRITER EFFECT ---
+        function typeWriter(text) {
+            return new Promise(resolve => {
+                let i = 0;
+                statusTextSpan.innerHTML = ''; 
+                cursor.style.display = 'inline-block';
+                
+                function typingStep() {
+                    if (i < text.length) {
+                        statusTextSpan.innerHTML += text.charAt(i);
+                        i++;
+                        setTimeout(typingStep, 40); 
+                    } else {
+                        resolve(); 
+                    }
+                }
+                typingStep();
+            });
+        }
+
+        // Start everything when the page loads
+        window.onload = initScan;
+    </script>
+
+</body>
+</html>
