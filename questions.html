@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
     <title>Inner Weather</title>
     <style>
         /* --- RESET & BASE --- */
@@ -13,7 +18,7 @@
             min-height: 100vh;
             background-color: #000;
             color: #fff;
-            font-family: 'Helvetica', Courier, monospace;
+            font-family: 'Space Grotesk', "Space Mono";
             display: flex;
             justify-content: center;
             align-items: center;
@@ -36,6 +41,7 @@
             color: #888; /* Slightly dim */
             margin-bottom: 2rem;
             display: block;
+            font-family:"Space Mono" ;
         }
 
         .question-text {
@@ -55,8 +61,8 @@
 
         .option-btn {
             background: transparent;
-            border: 1px solid #333;
             color: #ccc;
+            border: none;
             padding: 20px;
             font-family: inherit; /* Keep Courier */
             font-size: 1.1rem;
@@ -69,6 +75,8 @@
         .option-btn:hover {
             border-color: #fff;
             color: #fff;
+            border: 1px solid white;
+            border-radius: 30px;
         }
 
         /* The Selected State */
@@ -76,6 +84,7 @@
             background-color: white;
             color: black;
             border-color: white;
+            border-radius: 30px;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
             transform: scale(1.02);
         }
@@ -87,8 +96,6 @@
             background-color: transparent;
             color: white;
             text-decoration: none;
-            border: 1px solid white;
-            border-radius: 30px;
             font-size: 1rem;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -109,6 +116,8 @@
         .next-link:hover {
             background-color: white;
             color: black;
+            border: 1px solid white;
+            border-radius: 30px;
         }
 
         /* --- ANIMATION --- */

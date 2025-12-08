@@ -5,31 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Face Card Checking - Identification</title>
 
-<!-- P5.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-<!-- ml5.js -->
 <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
 <style>
     body {
         margin: 0;
         padding: 0;
         background: black;
-        font-family: Helvetica, Arial, sans-serif;
+        font-family:"Space Grotesk", "Space Mono";
         color: white;
         display: flex;
         flex-direction: column;
         align-items: center;
         min-height: 100vh;
         gap: 15px;
+        text-align: center;
     }
 
-    /* Counter at top */
-    #progress-meter {
-        width: 120px;
-        height: 120px;
+    /* Titles centered */
+    #small-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: #888;
+        margin-top: 25px;
+        font-family:"Space Mono";
+    }
+
+    #main-status {
+        font-size: 1.7rem;
+        letter-spacing: 4px;
+        font-weight: 700;
+        margin-bottom: -5px;
+        text-shadow: 0 0 10px rgba(255,255,255,0.4);
+    }
+
+    /* CAMERA FRAME now moved up */
+    #canvas-container {
+        width: 90%;
+        max-width: 800px;
+        height: 550px;
+        border: 4px solid white;
         position: relative;
-        margin-top: 20px;
+        margin-top: 10px;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+        transform: scaleX(-1);
+    }
+
+    /* Counter now inside the frame, top-right */
+    #progress-meter {
+        width: 110px;
+        height: 110px;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 20;
     }
 
     #progress-svg {
@@ -55,48 +96,18 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         font-weight: bold;
         color: white;
     }
 
-    /* Top text above frame */
-    #top-banner {
-        font-size: 1.3rem;
-        text-align: center;
-    }
-
-    #main-status {
-        font-size: 1rem;
-        text-align: center;
-    }
-
-    /* Frame container */
-    #canvas-container {
-        width: 90%;
-        max-width: 800px;
-        height: 550px; /* taller frame */
-        border: 4px solid white;
-        position: relative;
-    }
-
-    canvas {
-        width: 100% !important;
-        height: 100% !important;
-        display: block;
-        transform: scaleX(-1);
-    }
-
-    /* FACE CARD ACCEPTED text */
     #accepted-text {
         margin-top: 10px;
         font-size: 1rem;
-        color: rgba(255,255,255,0.7);
-        text-align: center;
+        opacity: 0.7;
         display: none;
     }
 
-    /* Continue button */
     #next-btn {
         margin-top: 5px;
         padding: 12px 40px;
@@ -110,32 +121,31 @@
     }
 
     @media (max-width: 600px) {
-        #progress-meter { width: 100px; height: 100px; }
-        #progress-value { font-size: 1.2rem; }
-        #canvas-container { height: 400px; }
-        #top-banner { font-size: 1.1rem; }
-        #main-status { font-size: 0.9rem; }
+        #progress-meter { width: 85px; height: 85px; }
+        #canvas-container { height: 380px; }
+        #main-status { font-size: 1.3rem; }
     }
 </style>
 </head>
 <body>
 
-<div id="top-banner">FACE CARD CHECKING</div>
+<div id="small-title">FACE CARD CHECKING</div>
 <div id="main-status">SYSTEM READY</div>
 
-<!-- Counter at top -->
-<div id="progress-meter">
-    <svg id="progress-svg" width="100%" height="100%" viewBox="0 0 150 150">
-        <circle class="circle-bg" cx="75" cy="75" r="70"/>
-        <circle id="progress-circle" cx="75" cy="75" r="70"/>
-    </svg>
-    <div id="progress-value">0%</div>
+<!-- CAMERA FRAME -->
+<div id="canvas-container">
+
+    <!-- Counter now INSIDE frame, top-right -->
+    <div id="progress-meter">
+        <svg id="progress-svg" width="100%" height="100%" viewBox="0 0 150 150">
+            <circle class="circle-bg" cx="75" cy="75" r="70"/>
+            <circle id="progress-circle" cx="75" cy="75" r="70"/>
+        </svg>
+        <div id="progress-value">0%</div>
+    </div>
+
 </div>
 
-<!-- CAMERA FRAME -->
-<div id="canvas-container"></div>
-
-<!-- Face card accepted text + button -->
 <div id="accepted-text">FACE CARD ACCEPTED</div>
 <a href="eye_scanning.html" id="next-btn">Continue</a>
 
@@ -187,7 +197,7 @@
             for (let j = 0; j < face.keypoints.length; j++) {
                 if (revealedKeypoints[j]) {
                     let k = face.keypoints[j];
-                    fill(37, 43, 204);
+                    fill(0);   // BLACK DOTS
                     noStroke();
                     circle(k.x, k.y, 5);
                 }
@@ -226,7 +236,6 @@
 
     function finishScanning() {
         acceptedTextEl.style.display = "block";
-        mainStatusEl.innerHTML = "";
         progressValueEl.innerHTML = "100%";
         progressCircleEl.style.strokeDashoffset = 0;
         nextBtnEl.style.display = "inline-block";

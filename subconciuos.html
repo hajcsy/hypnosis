@@ -1,246 +1,286 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hypno Sequence</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
-    <title>Subconscious Interface</title>
-    <style>
-        /* --- RESET & BASE STYLES --- */
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000; /* Pure black background */
-            color: #000;
-            font-family: 'Doto', Courier, monospace; /* Monospace for that "system" feel */
-            overflow: hidden; /* No scrolling */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
 
-        /* --- CONTAINER --- */
-        #interface-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    #videoContainer {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-        /* --- WEBCAM FEED (The Mirror) --- */
-        #webcam-feed {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1); /* Mirror the image so it feels like a reflection */
-            
-            /* THE LIMINAL FILTER */
-            /* Adjust these values to change the mood */
-            filter: grayscale(100%) contrast(130%) brightness(80%) blur(0.5px);
-            
-            opacity: 0; /* Hidden initially */
-            transition: opacity 2s ease-in-out;
-            z-index: 1;
-        }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-        /* --- PNG OVERLAY (The "Brain AI" Visual) --- */
-        #overlay-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Covers screen or use 'contain' to keep aspect ratio */
-            z-index: 2;
-            opacity: 0; /* Hidden initially */
-            pointer-events: none; /* Let clicks pass through */
-            transition: opacity 3s ease-in-out;
-            
-            /* BLEND MODE */
-            /* 'screen' or 'overlay' makes black parts of your PNG transparent */
-            /* and light parts glow. Great for sci-fi/holograms. */
-            mix-blend-mode: screen; 
-        }
+    #finalMessage {
+      opacity: 0;
+      font-size: 1.8rem;
+      text-align: center;
+      position: absolute;
+      top: 40%;
+      width: 100%;
+      transition: opacity 1.2s ease;
+      z-index: 20;
+    }
 
-        /* --- TEXT MESSAGE (The Barnum Effect) --- */
-        #message-container {
-            position: absolute;
-            z-index: 3;
-            width: 80%;
-            max-width: 800px;
-            text-align: center;
-            /* Centered on screen */
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-        }
+    #readyButton {
+      opacity: 0;
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 28px;
+      font-size: 1.2rem;
+      background: transparent;
+      color: white;
+      border: 2px solid white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 1s ease;
+      z-index: 20;
+    }
 
-        #typing-text {
-            font-size: 1.5rem;
-            line-height: 1.6;
-            color: #000;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-            font-weight: normal;
-            letter-spacing: 2px;
-        }
+    #cameraSection {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      background: black;
+    }
 
-        /* Blinking cursor effect */
-        .cursor {
-            display: inline-block;
-            width: 10px;
-            height: 1.5rem;
-            background-color: white;
-            animation: blink 1s infinite;
-            vertical-align: middle;
-        }
+    /* 1. THE CROP BOX (The Window) */
+    .crop-container {
+      position: relative;
+      width: 800px;
+      max-width: 100vw;
+      aspect-ratio: 4 / 3;
+      margin: auto;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 2px solid white;
+      overflow: hidden;
+    }
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
+    /* 2. THE ZOOM BOX (The Content) */
+    .zoom-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform: scale(1.4); /* ZOOM LEVEL */
+      transform-origin: center center;
+    }
 
-        /* --- START BUTTON --- */
-        #start-btn {
-            z-index: 10;
-            padding: 15px 30px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem;
-            background: transparent;
-            color: white;
-            border: 1px solid white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
+    #camera {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* MIRRORING */
+    }
 
-        #start-btn:hover {
-            background: white;
-            color: black;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
+    /* --- THE EYE GIFS SIZE CHANGE --- */
+    .eye-gif {
+      position: absolute;
+      /* width: 12%; OLD SIZE */
+      width: 8%; /* NEW SIZE: Smaller for a more natural look */
+      aspect-ratio: 1 / 1;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 10;
+    }
+    /* ------------------------------- */
 
-        .hidden {
-            display: none !important;
-        }
-    </style>
+    /* 3. THE TEXT OVERLAY */
+    #typingText {
+      position: absolute;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      
+      text-align: center;
+      font-size: 1.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid white;
+      width: 0ch;
+      
+      z-index: 100; 
+      
+      animation: typing 3.5s steps(40) forwards, cursorBlink 0.7s step-end infinite;
+      animation-delay: 1s;
+    }
+
+    #typingText.hiddenCursor {
+      border-right-color: transparent !important;
+      animation: none !important;
+      width: 0 !important;
+      opacity: 0 !important;
+    }
+
+    @keyframes typing {
+      to { width: 50ch; opacity: 1; }
+    }
+
+    @keyframes cursorBlink {
+      50% { border-color: transparent; }
+    }
+  </style>
 </head>
+
 <body>
 
-    <div id="interface-container">
-        
-        <!-- 1. The Camera Video -->
-        <video id="webcam-feed" autoplay playsinline muted></video>
+  <div id="videoContainer">
+    <video id="videoPlayer" muted playsinline></video>
+  </div>
 
-        <!-- 2. The PNG Overlay -->
-        <!-- Replace the src below with your own PNG file path -->
-        <!-- Using a placeholder abstract grid for now -->
-        <img id="overlay-image" src="hypnosis.gif" alt="Brain Interface Overlay">
+  <div id="finalMessage">Your connection was successful, are you ready to consult your subconscious?</div>
+  <button id="readyButton">READY</button>
 
-        <!-- 3. The Text Output -->
-        <div id="message-container">
-            <span id="typing-text"></span><span class="cursor"></span>
-        </div>
-
-        <!-- 4. The Trigger -->
-        <button id="start-btn" onclick="startExperience()">Connect to Subconscious</button>
-
+  <div id="cameraSection">
+    <div class="crop-container">
+      <div class="zoom-content">
+          <video id="camera" autoplay playsinline></video>
+          <img src="assets/gif/eye.gif" id="leftEye" class="eye-gif">
+          <img src="assets/gif/eye.gif" id="rightEye" class="eye-gif">
+      </div>
+      <div id="typingText" class="hiddenCursor"></div>
     </div>
+  </div>
 
-    <script>
-        // --- CONFIGURATION ---
-        
-        // This is the bank of Barnum statements.
-        // You can add or edit these strings.
-        const subconsciousMessages = [
-            "You present a capable exterior to the world, but you know this is a wall you've built to protect a deeper, more sensitive self.",
-            "You are at a crossroads. Part of you craves significant change, while another part clings to the safety of the familiar.",
-            "The obstacle you perceive is not a wall, but a mirror. The resistance you feel is your own potential waiting to be claimed.",
-            "You have a great deal of unused creative energy that you have been afraid to turn to your advantage.",
-            "You often doubt your decisions, even when you know deep down what is right. The key has been in your hand all along."
-        ];
+  <script>
+    // --- PART 1: VIDEO SEQUENCE LOGIC ---
+    const videos = [
+      "assets/videos/hypno1.mp4",
+      "assets/videos/hypno2.mp4",
+      "assets/videos/hypno3.mp4"
+    ];
 
-        // --- ELEMENTS ---
-        const videoElement = document.getElementById('webcam-feed');
-        const overlayElement = document.getElementById('overlay-image');
-        const textElement = document.getElementById('typing-text');
-        const startBtn = document.getElementById('start-btn');
-        const cursor = document.querySelector('.cursor');
+    const messages = [
+      "You present a capable exterior to the world.",
+      "You stand at a crossroads between change and familiarity.",
+      "Your obstacle is not a wall, but a mirror.",
+      "You have unused creative potential waiting to be claimed.",
+      "You doubt decisions even when you know what feels right."
+    ];
 
-        // --- MAIN FUNCTION ---
-        async function startExperience() {
-            // 1. Hide the button
-            startBtn.classList.add('hidden');
+    const player = document.getElementById("videoPlayer");
+    const videoContainer = document.getElementById("videoContainer");
+    const finalMessage = document.getElementById("finalMessage");
+    const readyButton = document.getElementById("readyButton");
+    const cameraSection = document.getElementById("cameraSection");
+    const cameraVideo = document.getElementById("camera");
+    const typingText = document.getElementById("typingText");
+    const leftEyeImg = document.getElementById("leftEye");
+    const rightEyeImg = document.getElementById("rightEye");
 
-            try {
-                // 2. Get Camera Access
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                videoElement.srcObject = stream;
+    let index = 0;
 
-                // 3. Fade in the camera (The "Mirror" activates)
-                // Small delay to let camera initialize
-                setTimeout(() => {
-                    videoElement.style.opacity = "1";
-                }, 500);
+    function playNextVideo() {
+      if (index >= videos.length) {
+        showFinalMessage();
+        return;
+      }
+      player.src = videos[index];
+      player.play();
+      index++;
+      setTimeout(playNextVideo, 5000);
+    }
 
-                // 4. Wait 4 seconds (The "Liminal" State - just staring at self)
-                setTimeout(() => {
-                    revealOverlayAndMessage();
-                }, 4000);
+    function showFinalMessage() {
+      player.style.display = "none";
+      finalMessage.style.opacity = 1;
+      setTimeout(() => {
+        readyButton.style.opacity = 1;
+      }, 1500);
+    }
 
-            } catch (err) {
-                console.error("Error accessing webcam:", err);
-                alert("Please allow camera access to communicate with your subconscious.");
-                startBtn.classList.remove('hidden');
-            }
+    readyButton.addEventListener("click", async () => {
+      finalMessage.style.opacity = 0;
+      readyButton.style.opacity = 0;
+
+      setTimeout(async () => {
+        videoContainer.style.display = "none";
+        cameraSection.style.display = "block";
+        startFaceTracking();
+
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        typingText.textContent = randomMessage;
+        typingText.classList.remove("hiddenCursor");
+
+      }, 800);
+    });
+
+    playNextVideo();
+
+    // --- PART 2: FACE TRACKING LOGIC ---
+    
+    function startFaceTracking() {
+        const faceMesh = new FaceMesh({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+        }});
+
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        faceMesh.onResults(onResults);
+
+        const camera = new Camera(cameraVideo, {
+            onFrame: async () => {
+                await faceMesh.send({image: cameraVideo});
+            },
+            width: 640,
+            height: 480
+        });
+
+        camera.start();
+    }
+
+    function onResults(results) {
+        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            const landmarks = results.multiFaceLandmarks[0];
+
+            const leftIris = landmarks[468];
+            const rightIris = landmarks[473];
+
+            // 1. Position Left Eye GIF
+            leftEyeImg.style.display = "block";
+            leftEyeImg.style.left = `${(1 - leftIris.x) * 100}%`; 
+            leftEyeImg.style.top = `${leftIris.y * 100}%`;
+
+            // 2. Position Right Eye GIF
+            rightEyeImg.style.display = "block";
+            rightEyeImg.style.left = `${(1 - rightIris.x) * 100}%`;
+            rightEyeImg.style.top = `${rightIris.y * 100}%`;
         }
-
-        function revealOverlayAndMessage() {
-            // 1. Fade in the PNG overlay
-            overlayElement.style.opacity = "0.6"; // Adjust opacity as needed (0 to 1)
-
-            // 2. Select a random message
-            const randomMessage = subconsciousMessages[Math.floor(Math.random() * subconsciousMessages.length)];
-
-            // 3. Start typing the message after a slight delay
-            setTimeout(() => {
-                typeWriter(randomMessage, 0);
-            }, 1000);
-        }
-
-        // --- TYPEWRITER EFFECT ---
-        function typeWriter(text, i) {
-            if (i < text.length) {
-                textElement.innerHTML += text.charAt(i);
-                
-                // Random typing speed to make it feel more "organic" or "thinking"
-                let speed = Math.floor(Math.random() * 100) + 50; 
-                
-                // Add extra pause for punctuation
-                if (text.charAt(i) === '.' || text.charAt(i) === ',') {
-                    speed += 400;
-                }
-
-                setTimeout(() => {
-                    typeWriter(text, i + 1);
-                }, speed);
-            } else {
-                // When done, maybe fade out the cursor?
-                // cursor.style.display = 'none';
-            }
-        }
-    </script>
+    }
+  </script>
 
 </body>
 </html>
