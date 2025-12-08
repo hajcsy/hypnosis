@@ -43,7 +43,6 @@
         letter-spacing: 4px;
         font-weight: 700;
         margin-bottom: -5px;
-        /* Initial subtle shadow for white text */
         text-shadow: 0 0 10px rgba(255,255,255,0.4); 
         transition: color 0.3s ease, text-shadow 0.3s ease;
     }
@@ -52,17 +51,21 @@
     #canvas-container {
         width: 90%;
         max-width: 800px;
-        height: 550px;
+        /* Desktop height */
+        height: 550px; 
         border: 4px solid white;
         position: relative;
         margin-top: 10px;
+        overflow: hidden; /* Ensures video stays inside border */
     }
 
+    /* Canvas styling - controlled by P5 but forced to fit */
     canvas {
         width: 100% !important;
         height: 100% !important;
         display: block;
-        transform: scaleX(-1);
+        /* Mirror effect */
+        transform: scaleX(-1); 
     }
 
     /* Counter inside the frame, top-right */
@@ -115,9 +118,17 @@
         text-transform: uppercase;
     }
 
+    /* MOBILE ADJUSTMENTS */
     @media (max-width: 600px) {
         #progress-meter { width: 85px; height: 85px; }
-        #canvas-container { height: 380px; }
+        
+        #canvas-container { 
+            height: auto; 
+            /* Use aspect ratio to prevent squashing on phone portrait mode */
+            aspect-ratio: 3/4; 
+            max-height: 60vh;
+        }
+        
         #main-status { font-size: 1.3rem; }
     }
 </style>
@@ -128,7 +139,6 @@
 <div id="main-status">SYSTEM READY</div>
 
 <div id="canvas-container">
-
     <div id="progress-meter">
         <svg id="progress-svg" width="100%" height="100%" viewBox="0 0 150 150">
             <circle class="circle-bg" cx="75" cy="75" r="70"/>
@@ -136,7 +146,6 @@
         </svg>
         <div id="progress-value">0%</div>
     </div>
-
 </div>
 
 <a href="eye_scanning.html" id="next-btn">Continue</a>
@@ -152,11 +161,14 @@
     let revealedCount = 0;
     let isScanning = false;
 
+    // DOM Elements
     const mainStatusEl = document.getElementById('main-status');
     const progressValueEl = document.getElementById('progress-value');
     const progressCircleEl = document.getElementById('progress-circle');
     const nextBtnEl = document.getElementById('next-btn');
+    const container = document.getElementById('canvas-container');
 
+    // Circle Progress Setup
     const circumference = 2 * Math.PI * 70;
     progressCircleEl.style.strokeDasharray = `${circumference}`;
     progressCircleEl.style.strokeDashoffset = circumference;
@@ -168,17 +180,42 @@
     }
 
     function setup() {
-        const canvas = createCanvas(700, 550);
+        // 1. Get exact dimensions of the HTML container
+        let w = container.offsetWidth;
+        let h = container.offsetHeight;
+
+        // 2. Create canvas matching the container
+        const canvas = createCanvas(w, h);
         canvas.parent('canvas-container');
 
-        video = createCapture(VIDEO);
-        video.size(700, 550);
+        // 3. Create video capture 
+        // We explicitly ask for 'user' (selfie mode) and disable audio
+        video = createCapture({
+            audio: false,
+            video: {
+                facingMode: "user"
+            }
+        });
+        
+        // 4. Force video to match canvas size
+        // This ensures the mesh points map 1:1 to what you see
+        video.size(w, h);
         video.hide();
 
+        // 5. Start detection
         faceMesh.detectStart(video, results => faces = results);
     }
 
+    // Handle Window Resize (Mobile orientation change)
+    function windowResized() {
+        let w = container.offsetWidth;
+        let h = container.offsetHeight;
+        resizeCanvas(w, h);
+        video.size(w, h);
+    }
+
     function draw() {
+        // Draw video to fill canvas
         image(video, 0, 0, width, height);
 
         if (faces.length > 0) {
@@ -188,9 +225,12 @@
             for (let j = 0; j < face.keypoints.length; j++) {
                 if (revealedKeypoints[j]) {
                     let k = face.keypoints[j];
+                    
                     fill(0);   // BLACK DOTS
                     noStroke();
-                    circle(k.x, k.y, 5);
+                    
+                    // Coordinates come from video, which matches canvas, so direct mapping works
+                    circle(k.x, k.y, 4); 
                 }
             }
         }
@@ -226,11 +266,8 @@
     }
 
     function finishScanning() {
-        // Change the main status text and color
         mainStatusEl.innerHTML = "FACE CARD ACCEPTED";
-        mainStatusEl.style.color = "#00FF00"; // Neon Green
-        
-        // REMOVED GLOW EFFECT
+        mainStatusEl.style.color = "#00FF00"; 
         mainStatusEl.style.textShadow = "none"; 
 
         progressValueEl.innerHTML = "100%";
