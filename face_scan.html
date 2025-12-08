@@ -43,10 +43,12 @@
         letter-spacing: 4px;
         font-weight: 700;
         margin-bottom: -5px;
-        text-shadow: 0 0 10px rgba(255,255,255,0.4);
+        /* Initial subtle shadow for white text */
+        text-shadow: 0 0 10px rgba(255,255,255,0.4); 
+        transition: color 0.3s ease, text-shadow 0.3s ease;
     }
 
-    /* CAMERA FRAME now moved up */
+    /* CAMERA FRAME */
     #canvas-container {
         width: 90%;
         max-width: 800px;
@@ -63,7 +65,7 @@
         transform: scaleX(-1);
     }
 
-    /* Counter now inside the frame, top-right */
+    /* Counter inside the frame, top-right */
     #progress-meter {
         width: 110px;
         height: 110px;
@@ -101,15 +103,8 @@
         color: white;
     }
 
-    #accepted-text {
-        margin-top: 10px;
-        font-size: 1rem;
-        opacity: 0.7;
-        display: none;
-    }
-
     #next-btn {
-        margin-top: 5px;
+        margin-top: 15px;
         padding: 12px 40px;
         background: white;
         color: black;
@@ -129,13 +124,11 @@
 </head>
 <body>
 
-<div id="small-title">FACE CARD CHECKING</div>
+<div id="small-title">✵ FACE CARD CHECKING ✵</div>
 <div id="main-status">SYSTEM READY</div>
 
-<!-- CAMERA FRAME -->
 <div id="canvas-container">
 
-    <!-- Counter now INSIDE frame, top-right -->
     <div id="progress-meter">
         <svg id="progress-svg" width="100%" height="100%" viewBox="0 0 150 150">
             <circle class="circle-bg" cx="75" cy="75" r="70"/>
@@ -146,7 +139,6 @@
 
 </div>
 
-<div id="accepted-text">FACE CARD ACCEPTED</div>
 <a href="eye_scanning.html" id="next-btn">Continue</a>
 
 <script>
@@ -164,7 +156,6 @@
     const progressValueEl = document.getElementById('progress-value');
     const progressCircleEl = document.getElementById('progress-circle');
     const nextBtnEl = document.getElementById('next-btn');
-    const acceptedTextEl = document.getElementById('accepted-text');
 
     const circumference = 2 * Math.PI * 70;
     progressCircleEl.style.strokeDasharray = `${circumference}`;
@@ -235,7 +226,13 @@
     }
 
     function finishScanning() {
-        acceptedTextEl.style.display = "block";
+        // Change the main status text and color
+        mainStatusEl.innerHTML = "FACE CARD ACCEPTED";
+        mainStatusEl.style.color = "#00FF00"; // Neon Green
+        
+        // REMOVED GLOW EFFECT
+        mainStatusEl.style.textShadow = "none"; 
+
         progressValueEl.innerHTML = "100%";
         progressCircleEl.style.strokeDashoffset = 0;
         nextBtnEl.style.display = "inline-block";

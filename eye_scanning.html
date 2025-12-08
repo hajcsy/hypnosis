@@ -42,7 +42,7 @@
         letter-spacing: 4px;
         text-shadow: 0 0 10px rgba(255,255,255,0.4);
         margin-bottom: 10px;
-        transition: color 0.3s, text-shadow 0.3s; /* Smooth transition for color change */
+        transition: color 0.3s, text-shadow 0.3s;
     }
 
     #status-text-container {
@@ -52,7 +52,7 @@
         text-align: center;
         font-size: 1.2rem;
         color: white;
-        opacity: 0;
+        opacity: 0; /* Starts hidden, fades in immediately */
         transition: opacity 1.5s ease-in;
     }
 
@@ -67,6 +67,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        
+        /* HIDDEN INITIALLY */
+        opacity: 0;
+        transition: opacity 2s ease-in;
     }
 
     /* Webcam inside frame - Zoomed and Flipped */
@@ -77,7 +81,6 @@
         position: absolute;
         top: 0;
         left: 0;
-        /* Flip Horizontal + Zoom 1.5x */
         transform: scale(-1.5, 1.5);
     }
 
@@ -87,11 +90,10 @@
         width: 40%;
         max-width: 250px;
         aspect-ratio: 1/1;
-        /* Centers this container in the frame */
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        opacity: 0; /* Hidden until cam loads */
+        opacity: 0; 
         transition: opacity 1s;
         z-index: 10;
         
@@ -142,7 +144,7 @@
 
 <body>
 
-    <div id="small-title">SUBCONSCIOUS SYNCHRONIZATION</div>
+    <div id="small-title">✵ SUBCONSCIOUS SYNCHRONIZATION ✵</div>
     <div id="main-status">SYSTEM READY</div>
 
     <div id="status-text-container">
@@ -163,10 +165,12 @@
     <a href="subconciuos.html" id="next-btn">Continue</a>
 
     <script>
-        // UPDATED: Changed to 5000ms (5 seconds)
-        const WAIT_FOR_SCAN_MS = 5000;
+        // CONFIGURATION
+        const TEXT_READ_TIME_MS = 6000; // 6 seconds for reading
+        const SCAN_DURATION_MS = 5000;  // 5 seconds for scanning
         
         const statusTextContainer = document.getElementById('status-text-container');
+        const frameContainer = document.getElementById('frame-container');
         const centerInterface = document.getElementById('center-interface');
         const mainStatus = document.getElementById('main-status');
         const nextBtn = document.getElementById('next-btn');
@@ -174,19 +178,30 @@
 
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
+        function startSequence() {
+            // 1. Show Text immediately
+            statusTextContainer.style.opacity = 1;
+
+            // 2. Wait 6 seconds, then start camera
+            setTimeout(() => {
+                initScan();
+            }, TEXT_READ_TIME_MS);
+        }
+
         async function initScan() {
             try {
+                // Reveal the camera frame container
+                frameContainer.style.opacity = 1;
+
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 videoElement.srcObject = stream;
                 await new Promise(res => videoElement.onloadedmetadata = res);
 
-                // Fade in text
-                statusTextContainer.style.opacity = 1;
-
-                // Fade in the center interface (Eye + GIF)
+                // Fade in the scanner overlay (Eye + GIF)
                 centerInterface.style.opacity = 1;
+                mainStatus.textContent = "SCANNING...";
 
-                await sleep(WAIT_FOR_SCAN_MS);
+                await sleep(SCAN_DURATION_MS);
                 finishScan();
 
             } catch(err){
@@ -199,15 +214,17 @@
             // Fade out the scanner overlay
             centerInterface.style.opacity = 0; 
             
-            // UPDATED: Text Change and Color Change
+            // Text Change and Color Change
             mainStatus.textContent = "IRIS SCANNED";
             mainStatus.style.color = "#00FF00"; // Neon Green
-            mainStatus.style.textShadow = "0 0 15px #00FF00"; // Green Glow
+            
+            // REMOVED GLOW EFFECT
+            mainStatus.style.textShadow = "none"; 
 
             nextBtn.classList.add("active");
         }
 
-        window.onload = initScan;
+        window.onload = startSequence;
     </script>
 
 </body>

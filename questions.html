@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
     <title>Inner Weather</title>
     <style>
@@ -30,7 +30,16 @@
             max-width: 600px;
             text-align: center;
             padding: 20px;
+        }
+
+        /* Classes to toggle visibility */
+        .question-block {
+            display: none; /* Hidden by default */
             animation: fadeContentIn 1.5s ease-out forwards;
+        }
+        
+        .question-block.active {
+            display: block;
         }
 
         /* --- TYPOGRAPHY --- */
@@ -38,7 +47,7 @@
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 3px;
-            color: #888; /* Slightly dim */
+            color: #888; 
             margin-bottom: 2rem;
             display: block;
             font-family:"Space Mono" ;
@@ -51,7 +60,7 @@
             font-weight: normal;
         }
 
-        /* --- OPTIONS (INTERACTIVE) --- */
+        /* --- OPTIONS (TEXT BUTTONS) --- */
         .options-list {
             display: flex;
             flex-direction: column;
@@ -64,7 +73,7 @@
             color: #ccc;
             border: none;
             padding: 20px;
-            font-family: inherit; /* Keep Courier */
+            font-family: inherit; 
             font-size: 1.1rem;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -79,14 +88,42 @@
             border-radius: 30px;
         }
 
-        /* The Selected State */
         .option-btn.selected {
             background-color: white;
             color: black;
-            border-color: white;
+            border: 1px solid white;
             border-radius: 30px;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
             transform: scale(1.02);
+        }
+
+        /* --- COLOR PALETTE --- */
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .color-dot {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-dot:hover {
+            transform: scale(1.1);
+            border-color: #fff;
+        }
+
+        .color-dot.selected {
+            border: 3px solid white;
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(255,255,255,0.4);
         }
 
         /* --- NEXT BUTTON --- */
@@ -95,13 +132,14 @@
             padding: 15px 40px;
             background-color: transparent;
             color: white;
-            text-decoration: none;
+            text-decoration: none; 
+            border: none; 
+            font-family: inherit;
             font-size: 1rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             transition: all 0.3s ease;
-            
-            /* Hidden initially until choice is made */
+            cursor: pointer;
             opacity: 0;
             pointer-events: none;
             transform: translateY(10px);
@@ -130,6 +168,20 @@
         @media (max-width: 600px) {
             .question-text { font-size: 1.2rem; }
             .option-btn { padding: 15px; font-size: 1rem; }
+            .color-dot { width: 40px; height: 40px; }
+        }
+
+        /* --- UPDATED: TIGHTER GRID FOR VERY SMALL SCREENS --- */
+        @media (max-width: 400px) {
+            .color-palette {
+                display: grid;
+                /* 'auto' keeps columns tight to the content instead of stretching */
+                grid-template-columns: repeat(3, auto); 
+                /* Centers the whole block of dots */
+                justify-content: center;
+                /* Vertical Gap: 20px, Horizontal Gap: 15px (closer together) */
+                gap: 20px 15px; 
+            }
         }
     </style>
 </head>
@@ -137,33 +189,74 @@
 
     <div class="container">
         <span class="small-title">✵ The Inner Weather ✵</span>
-        
-        <p class="question-text">Think of your current state of mind. Which landscape does it most resemble?</p>
 
-        <div class="options-list">
-            <button class="option-btn" onclick="selectOption(this)">A busy city street in the rain.</button>
-            <button class="option-btn" onclick="selectOption(this)">A dense, ancient forest, quiet and overgrown.</button>
-            <button class="option-btn" onclick="selectOption(this)">An empty desert under a vast, bright sky.</button>
+        <div id="q1" class="question-block active">
+            <p class="question-text">Think of your current state of mind. Which landscape does it most resemble?</p>
+
+            <div class="options-list">
+                <button class="option-btn" onclick="selectOption(this, 'nextBtn1')">A busy city street in the rain.</button>
+                <button class="option-btn" onclick="selectOption(this, 'nextBtn1')">A dense, ancient forest, quiet and overgrown.</button>
+                <button class="option-btn" onclick="selectOption(this, 'nextBtn1')">An empty desert under a vast, bright sky.</button>
+            </div>
+
+            <button id="nextBtn1" class="next-link" onclick="goToStep('q1', 'q2')">Next</button>
         </div>
 
-        <!-- This links to the camera/mirror page you created earlier -->
-        <a href="face_scan.html" id="nextBtn" class="next-link">Next</a>
+
+        <div id="q2" class="question-block">
+            <p class="question-text">You are in a room with two-way mirrors. Do you feel...</p>
+
+            <div class="options-list">
+                <button class="option-btn" onclick="selectOption(this, 'nextBtn2')">Watched</button>
+                <button class="option-btn" onclick="selectOption(this, 'nextBtn2')">Protected</button>
+                <button class="option-btn" onclick="selectOption(this, 'nextBtn2')">Curious</button>
+            </div>
+
+            <button id="nextBtn2" class="next-link" onclick="goToStep('q2', 'q3')">Next</button>
+        </div>
+
+
+        <div id="q3" class="question-block">
+            <p class="question-text">What color is your anxiety today?</p>
+
+            <div class="color-palette">
+                <div class="color-dot" style="background-color: #2F2F2F;" onclick="selectColor(this)"></div> <div class="color-dot" style="background-color: #3B4B96;" onclick="selectColor(this)"></div> <div class="color-dot" style="background-color: #8B0000;" onclick="selectColor(this)"></div> <div class="color-dot" style="background-color: #556B2F;" onclick="selectColor(this)"></div> <div class="color-dot" style="background-color: #4B0082;" onclick="selectColor(this)"></div> <div class="color-dot" style="background-color: #D3D3D3;" onclick="selectColor(this)"></div> </div>
+
+            <a href="face_scan.html" id="nextBtn3" class="next-link">Next</a>
+        </div>
+
     </div>
 
     <script>
-        function selectOption(clickedBtn) {
-            // 1. Remove 'selected' class from all buttons
-            const allButtons = document.querySelectorAll('.option-btn');
-            allButtons.forEach(btn => {
-                btn.classList.remove('selected');
-            });
+        // Handle Text Option Selection
+        function selectOption(clickedBtn, nextBtnId) {
+            const parentList = clickedBtn.closest('.options-list');
+            const buttons = parentList.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
 
-            // 2. Add 'selected' class to the clicked button
             clickedBtn.classList.add('selected');
+            document.getElementById(nextBtnId).classList.add('active');
+        }
 
-            // 3. Reveal the Next button
-            const nextBtn = document.getElementById('nextBtn');
-            nextBtn.classList.add('active');
+        // Handle Color Selection
+        function selectColor(clickedDot) {
+            const allDots = document.querySelectorAll('.color-dot');
+            allDots.forEach(dot => dot.classList.remove('selected'));
+
+            clickedDot.classList.add('selected');
+            document.getElementById('nextBtn3').classList.add('active');
+        }
+
+        // Handle Transition Between Questions
+        function goToStep(currentId, nextId) {
+            const current = document.getElementById(currentId);
+            const next = document.getElementById(nextId);
+
+            current.style.display = 'none';
+            current.classList.remove('active');
+
+            next.style.display = 'block';
+            next.classList.add('active');
         }
     </script>
 

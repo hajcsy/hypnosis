@@ -2,30 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Hypno Sequence</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --text-color: white;
+      --bg-color: black;
+      --font-main: 'Space Grotesk', "Space Mono", sans-serif;
+    }
+
     body {
       margin: 0;
-      background: black;
-      color: white;
-      font-family: Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-main);
       overflow: hidden;
       height: 100vh;
       width: 100vw;
+      position: fixed; /* Prevents bounce on mobile */
     }
 
+    /* --- VIDEO Intro Section --- */
     #videoContainer {
+      position: absolute;
+      top: 0; left: 0;
       width: 100vw;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      z-index: 10;
     }
 
     video {
@@ -36,59 +50,109 @@
 
     #finalMessage {
       opacity: 0;
-      font-size: 1.8rem;
+      font-size: 1.3rem;
       text-align: center;
       position: absolute;
       top: 40%;
-      width: 100%;
+      width: 90%;
+      left: 50%;
+      transform: translateX(-50%);
       transition: opacity 1.2s ease;
       z-index: 20;
     }
 
-    #readyButton {
+    /* --- BUTTONS --- */
+    .interaction-btn {
       opacity: 0;
+      pointer-events: none; 
+      padding: 12px 28px;
+      font-size: 1.2rem;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--text-color); 
+      border-radius: 6px;     
+      cursor: pointer;
+      transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      z-index: 30;
+      transform: translateY(30px); 
+    }
+
+    .interaction-btn.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .interaction-btn:hover {
+      background-color: var(--text-color);
+      color: var(--bg-color);
+      border-radius: 30px; 
+      box-shadow: 0 0 15px rgba(255,255,255,0.3);
+    }
+
+    #readyButton {
       position: absolute;
       top: 55%;
       left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 28px;
-      font-size: 1.2rem;
-      background: transparent;
-      color: white;
-      border: 2px solid white;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: opacity 1s ease;
-      z-index: 20;
+      transform: translate(-50%, 30px); 
+    }
+    
+    #readyButton.active {
+      transform: translate(-50%, 0);
     }
 
+    /* --- CAMERA Final Section --- */
     #cameraSection {
-      display: none;
+      display: none; 
       width: 100vw;
       height: 100vh;
-      position: relative;
-      background: black;
+      background: var(--bg-color);
+      z-index: 5;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 15px; 
+      padding: 20px;
+      box-sizing: border-box;
     }
 
-    /* 1. THE CROP BOX (The Window) */
+    /* SMALL TITLE */
+    .small-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: #888; 
+        margin-bottom: 0.5rem; 
+        display: block;
+        font-family: "Space Mono", monospace;
+        text-align: center;
+        width: 100%;
+        opacity: 0;
+        animation: fadeIn 2s ease forwards 1s;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* 1. THE CROP BOX (Desktop View) */
     .crop-container {
       position: relative;
-      width: 800px;
-      max-width: 100vw;
-      aspect-ratio: 4 / 3;
-      margin: auto;
-      top: 50%;
-      transform: translateY(-50%);
-      border: 2px solid white;
+      width: 1000px;
+      max-width: 95vw;
+      height: 70vh; 
+      border: 2px solid var(--text-color);
       overflow: hidden;
+      box-shadow: 0 0 20px rgba(255,255,255,0.1);
+      flex-shrink: 1; 
     }
 
-    /* 2. THE ZOOM BOX (The Content) */
     .zoom-content {
       position: relative;
       width: 100%;
       height: 100%;
-      transform: scale(1.4); /* ZOOM LEVEL */
+      transform: scale(1.4); 
       transform-origin: center center;
     }
 
@@ -99,53 +163,110 @@
       transform: scaleX(-1); /* MIRRORING */
     }
 
-    /* --- THE EYE GIFS SIZE CHANGE --- */
     .eye-gif {
       position: absolute;
-      /* width: 12%; OLD SIZE */
-      width: 8%; /* NEW SIZE: Smaller for a more natural look */
-      aspect-ratio: 1 / 1;
+      width: 60px; 
+      height: 60px;
       pointer-events: none;
-      transform: translate(-50%, -50%);
       display: none;
       z-index: 10;
+      mix-blend-mode: screen; 
+      transform: translate(-50%, -50%); 
     }
-    /* ------------------------------- */
 
-    /* 3. THE TEXT OVERLAY */
+    /* 2. THE TEXT CONTAINER */
+    .text-container-outer {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        min-height: 4rem; 
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; /* Align top so text flows down */
+        text-align: center;
+    }
+
+    /* --- TYPING CSS --- */
     #typingText {
-      position: absolute;
-      bottom: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      
-      text-align: center;
       font-size: 1.5rem;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 2px solid white;
-      width: 0ch;
       
-      z-index: 100; 
+      /* Allows wrapping on all devices */
+      white-space: pre-wrap; 
+      word-wrap: break-word;
+      line-height: 1.4;
       
-      animation: typing 3.5s steps(40) forwards, cursorBlink 0.7s step-end infinite;
-      animation-delay: 1s;
+      /* Only show blinking cursor using pseudo element */
+      position: relative;
+      display: inline-block;
     }
 
-    #typingText.hiddenCursor {
-      border-right-color: transparent !important;
-      animation: none !important;
-      width: 0 !important;
-      opacity: 0 !important;
+    /* The Blinking Block Cursor */
+    #typingText::after {
+        content: '';
+        display: inline-block;
+        width: 10px;
+        height: 1.2em;
+        background-color: white;
+        margin-left: 4px;
+        vertical-align: bottom;
+        animation: blink 1s step-end infinite;
+    }
+    
+    /* Hide cursor class */
+    #typingText.hiddenCursor::after {
+        display: none;
     }
 
-    @keyframes typing {
-      to { width: 50ch; opacity: 1; }
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
     }
 
-    @keyframes cursorBlink {
-      50% { border-color: transparent; }
+    /* 3. BUTTONS CONTAINER */
+    #endButtons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      flex-wrap: wrap; 
+    }
+
+
+    /* --- RESPONSIVE MEDIA QUERIES (Phone/Portrait) --- */
+    @media (max-width: 768px) {
+        
+        #cameraSection {
+            justify-content: flex-start;
+            padding-top: 30px;
+            gap: 10px;
+        }
+
+        .crop-container {
+            width: 100%;
+            height: auto; 
+            aspect-ratio: 3/4; 
+            max-height: 50vh; 
+        }
+
+        #typingText {
+            font-size: 1.1rem;
+        }
+        
+        .interaction-btn {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        #endButtons {
+            gap: 10px;
+            padding-bottom: 20px;
+        }
+
+        .eye-gif {
+            width: 40px;
+            height: 40px;
+        }
     }
   </style>
 </head>
@@ -157,86 +278,158 @@
   </div>
 
   <div id="finalMessage">Your connection was successful, are you ready to consult your subconscious?</div>
-  <button id="readyButton">READY</button>
+  
+  <button id="readyButton" class="interaction-btn">READY</button>
 
   <div id="cameraSection">
+    
+    <div class="small-title">✵ THE RIGHT ANSWER ✵</div>
+
     <div class="crop-container">
       <div class="zoom-content">
           <video id="camera" autoplay playsinline></video>
           <img src="assets/gif/eye.gif" id="leftEye" class="eye-gif">
           <img src="assets/gif/eye.gif" id="rightEye" class="eye-gif">
       </div>
-      <div id="typingText" class="hiddenCursor"></div>
     </div>
+
+     <div class="text-container-outer">
+        <div id="typingText" class="hiddenCursor"></div>
+     </div>
+
+    <div id="endButtons">
+        <button id="newMessageBtn" class="interaction-btn">NEW MESSAGE</button>
+        <button id="restartBtn" class="interaction-btn">RESTART CONNECTION</button>
+    </div>
+
   </div>
 
   <script>
-    // --- PART 1: VIDEO SEQUENCE LOGIC ---
-    const videos = [
-      "assets/videos/hypno1.mp4",
-      "assets/videos/hypno2.mp4",
-      "assets/videos/hypno3.mp4"
-    ];
+    const config = {
+        videoPaths: [
+          "assets/videos/hypno1.mp4",
+          "assets/videos/hypno2.mp4",
+          "assets/videos/hypno3.mp4"
+        ],
+        messages: [
+          "You present a capable exterior to the world.",
+          "You stand at a crossroads between change and familiarity.",
+          "Your obstacle is not a wall, but a mirror.",
+          "You have unused creative potential waiting to be claimed.",
+          "You doubt decisions even when you know what feels right.",
+          "Seek the answers in the silence between thoughts."
+        ],
+        // Speed of typing in ms per character
+        typingCharDelay: 50 
+    };
 
-    const messages = [
-      "You present a capable exterior to the world.",
-      "You stand at a crossroads between change and familiarity.",
-      "Your obstacle is not a wall, but a mirror.",
-      "You have unused creative potential waiting to be claimed.",
-      "You doubt decisions even when you know what feels right."
-    ];
+    const elements = {
+        player: document.getElementById("videoPlayer"),
+        videoContainer: document.getElementById("videoContainer"),
+        finalMessage: document.getElementById("finalMessage"),
+        readyButton: document.getElementById("readyButton"),
+        cameraSection: document.getElementById("cameraSection"),
+        cameraVideo: document.getElementById("camera"),
+        typingText: document.getElementById("typingText"),
+        leftEyeImg: document.getElementById("leftEye"),
+        rightEyeImg: document.getElementById("rightEye"),
+        newMessageBtn: document.getElementById("newMessageBtn"),
+        restartBtn: document.getElementById("restartBtn")
+    };
 
-    const player = document.getElementById("videoPlayer");
-    const videoContainer = document.getElementById("videoContainer");
-    const finalMessage = document.getElementById("finalMessage");
-    const readyButton = document.getElementById("readyButton");
-    const cameraSection = document.getElementById("cameraSection");
-    const cameraVideo = document.getElementById("camera");
-    const typingText = document.getElementById("typingText");
-    const leftEyeImg = document.getElementById("leftEye");
-    const rightEyeImg = document.getElementById("rightEye");
-
-    let index = 0;
+    let videoIndex = 0;
 
     function playNextVideo() {
-      if (index >= videos.length) {
+      if (videoIndex >= config.videoPaths.length) {
         showFinalMessage();
         return;
       }
-      player.src = videos[index];
-      player.play();
-      index++;
+      elements.player.src = config.videoPaths[videoIndex];
+      elements.player.play().catch(e => console.log("Autoplay blocked:", e));
+      videoIndex++;
       setTimeout(playNextVideo, 5000);
     }
 
     function showFinalMessage() {
-      player.style.display = "none";
-      finalMessage.style.opacity = 1;
+      elements.videoContainer.style.opacity = 0; 
       setTimeout(() => {
-        readyButton.style.opacity = 1;
-      }, 1500);
+          elements.videoContainer.style.display = "none";
+          elements.finalMessage.style.opacity = 1;
+          setTimeout(() => {
+            elements.readyButton.classList.add('active');
+          }, 1000);
+      }, 1000);
     }
 
-    readyButton.addEventListener("click", async () => {
-      finalMessage.style.opacity = 0;
-      readyButton.style.opacity = 0;
+    elements.readyButton.addEventListener("click", async () => {
+      elements.finalMessage.style.opacity = 0;
+      elements.readyButton.classList.remove('active');
 
       setTimeout(async () => {
-        videoContainer.style.display = "none";
-        cameraSection.style.display = "block";
+        elements.cameraSection.style.display = "flex";
         startFaceTracking();
-
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-        typingText.textContent = randomMessage;
-        typingText.classList.remove("hiddenCursor");
-
+        triggerTypingEffect();
       }, 800);
     });
 
     playNextVideo();
 
-    // --- PART 2: FACE TRACKING LOGIC ---
+    // --- "NEW MESSAGE" BUTTON ---
+    elements.newMessageBtn.addEventListener("click", () => {
+        triggerTypingEffect();
+    });
+
+    // --- "RESTART" BUTTON (Updated to go to index.html) ---
+    elements.restartBtn.addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+
+
+    // --- JS BASED TYPING ENGINE ---
+    let typeInterval;
     
+    function typeWriter(text, element, delay) {
+        let i = 0;
+        element.textContent = "";
+        
+        // Ensure cursor is visible
+        element.classList.remove("hiddenCursor");
+        
+        clearInterval(typeInterval); // Clear any existing typing
+        
+        typeInterval = setInterval(() => {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+            } else {
+                clearInterval(typeInterval);
+                // Animation finished, show buttons
+                showEndButtons();
+            }
+        }, delay);
+    }
+
+    function triggerTypingEffect() {
+        // 1. Hide buttons
+        elements.newMessageBtn.classList.remove('active');
+        elements.restartBtn.classList.remove('active');
+        
+        // 2. Select message
+        const randomMessage = config.messages[Math.floor(Math.random() * config.messages.length)];
+        
+        // 3. Start Typing
+        typeWriter(randomMessage, elements.typingText, config.typingCharDelay);
+    }
+    
+    function showEndButtons() {
+        setTimeout(() => {
+            elements.newMessageBtn.classList.add('active');
+            elements.restartBtn.classList.add('active');
+        }, 500); 
+    }
+
+
+    // --- FACE TRACKING ---
     function startFaceTracking() {
         const faceMesh = new FaceMesh({locateFile: (file) => {
             return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
@@ -251,34 +444,34 @@
 
         faceMesh.onResults(onResults);
 
-        const camera = new Camera(cameraVideo, {
+        const camera = new Camera(elements.cameraVideo, {
             onFrame: async () => {
-                await faceMesh.send({image: cameraVideo});
+                await faceMesh.send({image: elements.cameraVideo});
             },
             width: 640,
             height: 480
         });
 
-        camera.start();
+        camera.start().catch(e => {
+            console.error("Camera error", e);
+            elements.typingText.textContent = "Camera access needed.";
+        });
     }
 
     function onResults(results) {
-        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-            const landmarks = results.multiFaceLandmarks[0];
+        if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) return;
 
-            const leftIris = landmarks[468];
-            const rightIris = landmarks[473];
+        const landmarks = results.multiFaceLandmarks[0];
+        const leftIris = landmarks[468];
+        const rightIris = landmarks[473];
 
-            // 1. Position Left Eye GIF
-            leftEyeImg.style.display = "block";
-            leftEyeImg.style.left = `${(1 - leftIris.x) * 100}%`; 
-            leftEyeImg.style.top = `${leftIris.y * 100}%`;
+        elements.leftEyeImg.style.display = "block";
+        elements.leftEyeImg.style.left = `${(1 - leftIris.x) * 100}%`;
+        elements.leftEyeImg.style.top = `${leftIris.y * 100}%`;
 
-            // 2. Position Right Eye GIF
-            rightEyeImg.style.display = "block";
-            rightEyeImg.style.left = `${(1 - rightIris.x) * 100}%`;
-            rightEyeImg.style.top = `${rightIris.y * 100}%`;
-        }
+        elements.rightEyeImg.style.display = "block";
+        elements.rightEyeImg.style.left = `${(1 - rightIris.x) * 100}%`;
+        elements.rightEyeImg.style.top = `${rightIris.y * 100}%`;
     }
   </script>
 

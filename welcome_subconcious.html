@@ -5,18 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Brain AI - Initialization</title>
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@100;200;300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://use.typekit.net/wvg6xdq.css">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
 
     <style>
-
         /* --- BASE --- */
         html, body {
             margin: 0;
@@ -25,82 +20,78 @@
             height: 100%;
             background: #000;
             color: #fff;
-            font-family: "hagrid" sans-serif, "tchig-mono", "calvino", "Sapce Grotesk" ;
-            /* IMPORTANT: must be visible for ellipses */
+            font-family: "Space Grotesk", "Poppins", sans-serif;
             overflow: visible;
         }
 
         /* --- BACKGROUND ELLIPSES (with noise) --- */
-.ellipse {
-    position: fixed;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(circle,
-        rgba(217, 217, 217, 0.28),
-        rgba(217, 217, 217, 0)
-    );
-    filter: blur(200px);
-    overflow: hidden;
-}
+        .ellipse {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(circle,
+                rgba(217, 217, 217, 0.28),
+                rgba(217, 217, 217, 0)
+            );
+            filter: blur(200px);
+            overflow: hidden;
+        }
 
-/* Add noise texture */
-.ellipse::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url("https://www.transparenttextures.com/patterns/noise.png");
-    opacity: 1;   /* adjust noise strength */
-    pointer-events: none;
-}
+        .ellipse::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("https://www.transparenttextures.com/patterns/noise.png");
+            opacity: 1;
+            pointer-events: none;
+        }
 
-/* BIGGER RIGHT ELLIPSE */
-.ellipse.top-right {
-    width: 60vw;
-    height: 60vw;
-    max-width: 1100px;
-    max-height: 1100px;
-    top: -15vw;
-    right: -15vw;
-}
+        /* BIGGER RIGHT ELLIPSE */
+        .ellipse.top-right {
+            width: 60vw;
+            height: 60vw;
+            max-width: 1100px;
+            max-height: 1100px;
+            top: -15vw;
+            right: -15vw;
+        }
 
-/* SMALLER LEFT ELLIPSE */
-.ellipse.bottom-left {
-    width: 45vw;
-    height: 45vw;
-    max-width: 700px;
-    max-height: 700px;
-    bottom: -2vw;
-    left: -18vw;
-}
+        /* SMALLER LEFT ELLIPSE */
+        .ellipse.bottom-left {
+            width: 45vw;
+            height: 45vw;
+            max-width: 700px;
+            max-height: 700px;
+            bottom: -2vw;
+            left: -18vw;
+        }
 
-/* --- MOBILE ADJUSTMENTS --- */
-@media (max-width: 600px) {
-    .ellipse {
-        filter: blur(120px);
-    }
+        /* --- MOBILE ADJUSTMENTS --- */
+        @media (max-width: 600px) {
+            .ellipse {
+                filter: blur(120px);
+            }
 
-    .ellipse.top-right {
-        width: 60vw;
-        height: 60vw;
-        top: -8vw;       /* less corner */
-        right: -8vw;
-    }
+            .ellipse.top-right {
+                width: 60vw;
+                height: 60vw;
+                top: -8vw;
+                right: -8vw;
+            }
 
-    .ellipse.bottom-left {
-        width: 95vw;
-        height: 95vw;
-        bottom: -10vw;   /* less corner */
-        left: -20vw;
-       }    
-    
-}
-
+            .ellipse.bottom-left {
+                width: 95vw;
+                height: 95vw;
+                bottom: -10vw;
+                left: -20vw;
+            }    
+        }
 
         /* --- CONTENT CONTAINER --- */
         .content-container {
             position: relative;
-            z-index: 10; /* above ellipses */
+            z-index: 10;
             height: 100%;
             width: 90%;
             max-width: 600px;
@@ -115,12 +106,13 @@
         }
 
         h1 {
-            font-size: 3.rem;
+            font-size: 3rem;
             font-family: "Space Grotesk";
             letter-spacing: 5px;
             margin-bottom: 2rem;
             font-weight: 700;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            /* GLOW REMOVED */
+            text-shadow: none; 
         }
 
         p {
@@ -139,14 +131,17 @@
             font-weight: 100;
         }
 
+        /* --- UPDATED BUTTON STYLES --- */
         .start-btn {
             margin-top: 2rem;
-            padding: 8px 28px;
+            padding: 12px 28px;
+            
+            /* Base State */
             background: transparent;
             color: #fff;
-            border-radius: 50px;
-            border-color: #fff;
-            border-width: 1px;
+            border: 1px solid #fff;
+            border-radius: 6px; /* Standard starting radius */
+            
             font-size: 0.8rem;
             font-family: "Space Grotesk", sans-serif;
             text-transform: uppercase;
@@ -154,13 +149,21 @@
             font-weight: 400;
             cursor: pointer;
             text-decoration: none;
+            
+            /* Smooth transition for hover effects */
+            transition: all 0.4s ease;
+            
+            /* Animation properties to match .active concept if needed later */
+            transform: translateY(0);
+            opacity: 1;
         }
 
+        /* The Hover State Requested */
         .start-btn:hover {
             background-color: white;
             color: black;
             border: 1px solid white;
-            border-radius: 30px;
+            border-radius: 30px; /* Morphs to pill shape */
         }
 
         @keyframes fadeContentIn {
@@ -172,16 +175,15 @@
 </head>
 <body>
 
-    <!-- Background Ellipses -->
     <div class="ellipse top-right"></div>
     <div class="ellipse bottom-left"></div>
 
-    <!-- Content -->
     <div class="content-container">
         <h1>Welcome</h1>
         <p>To sync with your subconscious, we must first attune to its language.</p>
         <p>Your subconscious does not speak in words, but in symbols, feelings, and echoes. Answer the following prompts. There are no right or wrong answers. Only your answers.</p>
         <p class="instruction-text">Press Start to begin calibration.</p>
+        
         <a href="questions.html" class="start-btn">Start</a>
 
     </div>
