@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Face Card Checking</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Card Checking - Identification</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
@@ -18,14 +18,14 @@
         margin: 0;
         padding: 0;
         background: black;
-        font-family: "Space Grotesk", "Space Mono";
+        font-family:"Space Grotesk", "Space Mono";
         color: white;
         display: flex;
         flex-direction: column;
         align-items: center;
         min-height: 100vh;
+        gap: 15px;
         text-align: center;
-        overflow-x: hidden;
     }
 
     #small-title {
@@ -34,41 +34,37 @@
         letter-spacing: 3px;
         color: #888;
         margin-top: 25px;
-        font-family: "Space Mono";
+        font-family:"Space Mono";
     }
 
     #main-status {
         font-size: 1.7rem;
         letter-spacing: 4px;
         font-weight: 700;
-        margin-bottom: 10px;
+        margin-bottom: -5px;
         text-shadow: 0 0 10px rgba(255,255,255,0.4); 
         transition: color 0.3s ease, text-shadow 0.3s ease;
     }
 
-    /* CONTAINER FOR P5 CANVAS */
-    #canvas-wrapper {
-        position: relative;
+    /* CAMERA FRAME - Desktop Default */
+    #canvas-container {
         width: 90%;
-        max-width: 600px;
-        /* We let JS set the height to maintain aspect ratio */
+        max-width: 800px;
+        height: 550px; /* Fixed height for desktop */
         border: 4px solid white;
+        position: relative;
+        margin-top: 10px;
         overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
     }
 
-    /* P5 Canvas styling */
+    /* P5 Canvas */
     canvas {
-        display: block;
         width: 100% !important;
         height: 100% !important;
-        /* Mirror the view */
-        transform: scaleX(-1);
+        display: block;
+        transform: scaleX(-1); /* Mirror effect */
     }
 
-    /* Progress Meter Overlays */
     #progress-meter {
         width: 110px;
         height: 110px;
@@ -76,7 +72,6 @@
         top: 10px;
         right: 10px;
         z-index: 20;
-        pointer-events: none; /* Let clicks pass through */
     }
 
     #progress-svg {
@@ -108,7 +103,7 @@
     }
 
     #next-btn {
-        margin-top: 20px;
+        margin-top: 15px;
         padding: 12px 40px;
         background: white;
         color: black;
@@ -117,12 +112,19 @@
         text-decoration: none;
         display: none;
         text-transform: uppercase;
-        margin-bottom: 30px;
     }
 
-    /* MOBILE TWEAKS */
+    /* MOBILE ADJUSTMENTS */
     @media (max-width: 600px) {
         #progress-meter { width: 85px; height: 85px; }
+        
+        #canvas-container { 
+            /* On phone, we remove fixed height and use aspect ratio */
+            height: auto; 
+            aspect-ratio: 3/4; /* Standard Portrait Ratio */
+            max-height: 60vh;
+        }
+        
         #main-status { font-size: 1.3rem; }
     }
 </style>
@@ -132,7 +134,7 @@
 <div id="small-title">✵ FACE CARD CHECKING ✵</div>
 <div id="main-status">SYSTEM READY</div>
 
-<div id="canvas-wrapper">
+<div id="canvas-container">
     <div id="progress-meter">
         <svg id="progress-svg" width="100%" height="100%" viewBox="0 0 150 150">
             <circle class="circle-bg" cx="75" cy="75" r="70"/>
@@ -148,7 +150,7 @@
     let faceMesh;
     let video;
     let faces = [];
-    const options = { maxFaces: 1, refineLandmarks: true, minConfidence: 0.5 };
+    const options = { maxFaces: 1 };
 
     const totalKeypoints = 468;
     let revealedKeypoints = new Array(totalKeypoints).fill(false);
@@ -160,7 +162,7 @@
     const progressValueEl = document.getElementById('progress-value');
     const progressCircleEl = document.getElementById('progress-circle');
     const nextBtnEl = document.getElementById('next-btn');
-    const wrapper = document.getElementById('canvas-wrapper');
+    const container = document.getElementById('canvas-container');
 
     // Circle Progress
     const circumference = 2 * Math.PI * 70;
@@ -174,56 +176,43 @@
     }
 
     function setup() {
-        // 1. Calculate dimensions based on screen width
-        // We use a 4:3 aspect ratio which is standard for most phone cameras
-        // This prevents the "squeeze"
-        let w = Math.min(800, window.innerWidth * 0.9); 
-        let h = w * (4/3); // 4:3 Aspect Ratio (Height is 1.33x Width)
-
-        // Set wrapper height explicitly
-        wrapper.style.height = h + "px";
+        // 1. Get exact container dimensions
+        let w = container.offsetWidth;
+        let h = container.offsetHeight;
 
         // 2. Create Canvas
         const canvas = createCanvas(w, h);
-        canvas.parent('canvas-wrapper');
-        
-        // 3. Create Video with specific mobile constraints
+        canvas.parent('canvas-container');
+
+        // 3. Create Video with mobile constraints
         video = createCapture({
             audio: false,
             video: {
-                facingMode: "user",
-                // Prefer ideal resolution for better mesh tracking
-                width: { ideal: 640 },
-                height: { ideal: 480 }
+                facingMode: "user"
             }
         });
-
-        video.hide();
         
-        // 4. IMPORTANT: Wait for video metadata to load before sizing
-        // This fixes the rotation/squeeze on mobile
-        video.elt.onloadedmetadata = () => {
-            video.size(w, h); // Force internal video element to match canvas
-            faceMesh.detectStart(video, results => faces = results);
-        };
+        video.hide();
+
+        // 4. IMPORTANT FIX: Force the video element to match the canvas size EXACTLY.
+        // This overrides the camera's internal resolution and forces points to align.
+        video.size(w, h);
+
+        // 5. Start detecting
+        faceMesh.detectStart(video, results => faces = results);
     }
 
+    // Handle Resize (e.g. rotating phone)
     function windowResized() {
-        // Responsive resize
-        let w = Math.min(800, window.innerWidth * 0.9);
-        let h = w * (4/3);
-        wrapper.style.height = h + "px";
+        let w = container.offsetWidth;
+        let h = container.offsetHeight;
         resizeCanvas(w, h);
-        video.size(w, h);
+        video.size(w, h); // Resize video again to keep sync
     }
 
     function draw() {
-        background(0); // Clear background
-        
         // Draw video
-        if(video.loadedmetadata) {
-             image(video, 0, 0, width, height);
-        }
+        image(video, 0, 0, width, height);
 
         if (faces.length > 0) {
             if (!isScanning) startScanning();
@@ -237,8 +226,7 @@
             for (let j = 0; j < face.keypoints.length; j++) {
                 if (revealedKeypoints[j]) {
                     let k = face.keypoints[j];
-                    // On mobile, sometimes x/y need slight adjustment if ratios drift, 
-                    // but the resize logic above usually fixes it.
+                    // The video is sized to width/height, so k.x and k.y match exactly
                     circle(k.x, k.y, 4); 
                 }
             }
@@ -262,7 +250,7 @@
             revealedCount++;
             updateProgress();
 
-        }, 5); // Speed of scan
+        }, 5); // Scan speed
     }
 
     function updateProgress() {
