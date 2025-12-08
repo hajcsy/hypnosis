@@ -30,6 +30,37 @@
       position: fixed; /* Prevents bounce on mobile */
     }
 
+    /* --- START OVERLAY (New Fix) --- */
+    #startOverlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: black;
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: opacity 0.5s ease;
+    }
+
+    #startText {
+        font-family: "Space Mono", monospace;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        animation: pulse 2s infinite;
+        text-transform: uppercase;
+        text-align: center;
+        padding: 20px;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 0.5; }
+    }
+
     /* --- VIDEO Intro Section --- */
     #videoContainer {
       position: absolute;
@@ -190,18 +221,13 @@
     #typingText {
       font-size: 1.5rem;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-      
-      /* Allows wrapping on all devices */
       white-space: pre-wrap; 
       word-wrap: break-word;
       line-height: 1.4;
-      
-      /* Only show blinking cursor using pseudo element */
       position: relative;
       display: inline-block;
     }
 
-    /* The Blinking Block Cursor */
     #typingText::after {
         content: '';
         display: inline-block;
@@ -213,7 +239,6 @@
         animation: blink 1s step-end infinite;
     }
     
-    /* Hide cursor class */
     #typingText.hiddenCursor::after {
         display: none;
     }
@@ -233,9 +258,8 @@
     }
 
 
-    /* --- RESPONSIVE MEDIA QUERIES (Phone/Portrait) --- */
+    /* --- RESPONSIVE MEDIA QUERIES --- */
     @media (max-width: 768px) {
-        
         #cameraSection {
             justify-content: flex-start;
             padding-top: 30px;
@@ -273,8 +297,12 @@
 
 <body>
 
+  <div id="startOverlay">
+      <div id="startText">TAP TO CONNECT</div>
+  </div>
+
   <div id="videoContainer">
-    <video id="videoPlayer" muted playsinline></video>
+    <video id="videoPlayer" muted playsinline preload="auto"></video>
   </div>
 
   <div id="finalMessage">Your connection was successful, are you ready to consult your subconscious?</div>
@@ -319,11 +347,11 @@
           "You doubt decisions even when you know what feels right.",
           "Seek the answers in the silence between thoughts."
         ],
-        // Speed of typing in ms per character
         typingCharDelay: 50 
     };
 
     const elements = {
+        startOverlay: document.getElementById("startOverlay"),
         player: document.getElementById("videoPlayer"),
         videoContainer: document.getElementById("videoContainer"),
         finalMessage: document.getElementById("finalMessage"),
@@ -339,13 +367,34 @@
 
     let videoIndex = 0;
 
+    // --- FIX: START ON USER CLICK ---
+    elements.startOverlay.addEventListener('click', () => {
+        // Fade out overlay
+        elements.startOverlay.style.opacity = '0';
+        setTimeout(() => {
+            elements.startOverlay.style.display = 'none';
+        }, 500);
+
+        // Start video sequence
+        playNextVideo();
+    });
+
     function playNextVideo() {
       if (videoIndex >= config.videoPaths.length) {
         showFinalMessage();
         return;
       }
       elements.player.src = config.videoPaths[videoIndex];
-      elements.player.play().catch(e => console.log("Autoplay blocked:", e));
+      
+      // Attempt play - now safer because it's inside a click chain
+      const playPromise = elements.player.play();
+      if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log("Auto-play prevented:", error);
+            // If it fails, force move to next step or show error
+          });
+      }
+
       videoIndex++;
       setTimeout(playNextVideo, 5000);
     }
@@ -372,30 +421,23 @@
       }, 800);
     });
 
-    playNextVideo();
-
-    // --- "NEW MESSAGE" BUTTON ---
+    // --- BUTTON HANDLERS ---
     elements.newMessageBtn.addEventListener("click", () => {
         triggerTypingEffect();
     });
 
-    // --- "RESTART" BUTTON (Updated to go to index.html) ---
     elements.restartBtn.addEventListener("click", () => {
         window.location.href = "index.html";
     });
 
-
-    // --- JS BASED TYPING ENGINE ---
+    // --- TYPING ENGINE ---
     let typeInterval;
     
     function typeWriter(text, element, delay) {
         let i = 0;
         element.textContent = "";
-        
-        // Ensure cursor is visible
         element.classList.remove("hiddenCursor");
-        
-        clearInterval(typeInterval); // Clear any existing typing
+        clearInterval(typeInterval); 
         
         typeInterval = setInterval(() => {
             if (i < text.length) {
@@ -403,21 +445,15 @@
                 i++;
             } else {
                 clearInterval(typeInterval);
-                // Animation finished, show buttons
                 showEndButtons();
             }
         }, delay);
     }
 
     function triggerTypingEffect() {
-        // 1. Hide buttons
         elements.newMessageBtn.classList.remove('active');
         elements.restartBtn.classList.remove('active');
-        
-        // 2. Select message
         const randomMessage = config.messages[Math.floor(Math.random() * config.messages.length)];
-        
-        // 3. Start Typing
         typeWriter(randomMessage, elements.typingText, config.typingCharDelay);
     }
     
@@ -427,7 +463,6 @@
             elements.restartBtn.classList.add('active');
         }, 500); 
     }
-
 
     // --- FACE TRACKING ---
     function startFaceTracking() {
@@ -454,7 +489,7 @@
 
         camera.start().catch(e => {
             console.error("Camera error", e);
-            elements.typingText.textContent = "Camera access needed.";
+            elements.typingText.textContent = "Please allow camera access.";
         });
     }
 
